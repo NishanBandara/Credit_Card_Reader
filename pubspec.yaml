@@ -38,6 +38,8 @@ dependencies:
   fluttertoast: ^8.2.1
   cached_network_image: ^3.2.3
   google_fonts: ^3.0.1
+  credit_card_scanner:
+  # ml_card_scanner: ^0.0.5
 
 dev_dependencies:
   flutter_test:

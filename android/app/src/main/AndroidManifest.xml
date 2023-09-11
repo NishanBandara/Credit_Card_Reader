@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.credit_card_reader">
+
+   <uses-permission android:name="android.permission.CAMERA"/> 
    <application
         android:label="credit_card_reader"
         android:name="${applicationName}"
@@ -30,5 +32,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- <meta-data
+        tools:replace="android:value"
+        android:name="android.support.VERSION"
+        android:value="25.3.1" />     -->
     </application>
 </manifest>

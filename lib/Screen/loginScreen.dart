@@ -1,3 +1,4 @@
+import 'package:credit_card_reader/Screen/cardScanner.dart';
 import 'package:credit_card_reader/Screen/homeScreen.dart';
 import 'package:credit_card_reader/Screen/widgets/card_widget.dart';
 import 'package:credit_card_reader/configure/colors.dart';
@@ -28,7 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffeeeeee),
+      resizeToAvoidBottomInset: false,
+      backgroundColor: AppColors.bgColor,
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -37,7 +39,13 @@ class _LoginScreenState extends State<LoginScreen> {
               height: getScreenHeight(context, 100),
               width: getScreenWidth(context, 200),
             ),
-            const CardWidget(),
+            Image.asset(
+              'assets/images/splash_card.png',
+              // color: AppColors.theamSecondaryColor,
+              width: getScreenWidth(context, 100),
+              height: getScreenHeight(context, 100),
+            ),
+            // const CardWidget(),
             SizedBox(
               height: getScreenHeight(context, 50),
             ),
@@ -134,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const HomeScreen()));
+                    builder: (context) => const CreditCardScanner()));
               },
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10),
