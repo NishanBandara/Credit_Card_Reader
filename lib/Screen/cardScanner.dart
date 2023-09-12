@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:credit_card_reader/Screen/homeScreen.dart';
 import 'package:credit_card_reader/Screen/widgets/leading_icon.dart';
 import 'package:credit_card_reader/configure/colors.dart';
 import 'package:credit_card_reader/utils/get_screen_size.dart';
@@ -22,8 +23,8 @@ class CreditCardScanner extends StatefulWidget {
 class _CreditCardScannerState extends State<CreditCardScanner> {
   // CardInfo? _cardInfo;
   // final ScannerWidgetController _controller = ScannerWidgetController();
-  String? cardata;
-  Future<void> test() async {
+  String? cardata, cardNumber, expDate, cardType, holderName;
+  Future<void> scanPhysical() async {
     var cardDetails = await CardScanner.scanCard(
       scanOptions: CardScanOptions(
         scanCardHolderName: true,
@@ -32,6 +33,19 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
 
     setState(() {
       cardata = cardDetails.toString();
+      cardNumber = cardDetails?.cardNumber;
+      expDate = cardDetails?.expiryDate;
+      cardType = cardDetails?.cardIssuer;
+      holderName = cardDetails?.cardHolderName;
+      if (cardata != null) {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => HomeScreen(
+                  cardNumber: cardNumber.toString(),
+                  cardType: cardType.toString(),
+                  expDate: expDate.toString(),
+                  holderName: holderName.toString(),
+                )));
+      }
     });
 
     print(cardDetails);
@@ -39,20 +53,15 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
 
   @override
   void initState() {
-    test();
-    // _controller
-    //   ..setCardListener((value) {
-    //     setState(() {
-    //       _cardInfo = value;
-    //       log(_cardInfo.toString());
-    //     });
-    //   })
-    //   ..setErrorListener((exception) {
-    //     if (kDebugMode) {
-    //       print('Error: ${exception.message}');
-    //     }
-    //   });
+    // test();
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
   }
 
   @override
@@ -89,9 +98,18 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
             //     overlayOrientation: CardOrientation.landscape,
             //   ),
             // ),
+
+            Container(
+                width: 235,
+                height: 235,
+                child: Image.asset(
+                  'assets/images/scan_card.JPG',
+                  // color: AppColors.theamSecondaryColor,
+                  scale: 1.5,
+                )),
             Container(
                 width: MediaQuery.of(context).size.width,
-                color: Colors.white,
+                // color: Colors.white,
                 child: Column(
                   children: [
                     const SizedBox(
@@ -103,14 +121,12 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
                     ),
                   ],
                 )),
-            Container(width: 200, height: 200, color: Colors.black12),
             SizedBox(
               height: getScreenHeight(context, 50),
             ),
             InkWell(
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const CreditCardScanner()));
+              onTap: () async {
+                await scanPhysical();
               },
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10),
@@ -141,7 +157,12 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const CreditCardScanner()));
+                    builder: (context) => HomeScreen(
+                          cardNumber: "12313213",
+                          cardType: "CardIssuer.mastercard",
+                          expDate: "03/06",
+                          holderName: "MONTHLY",
+                        )));
               },
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10),

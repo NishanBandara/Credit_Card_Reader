@@ -39,7 +39,7 @@ dependencies:
   cached_network_image: ^3.2.3
   google_fonts: ^3.0.1
   credit_card_scanner:
-  # ml_card_scanner: ^0.0.5
+  sqflite: ^2.0.2+1
 
 dev_dependencies:
   flutter_test:
@@ -64,9 +64,6 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/page-1/images/logo-07-1.png
-    - assets/page-1/images/logo-06-1.png
-    - assets/page-1/images/logo-09-1.png
     - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -8,4 +8,5 @@ class AppColors {
 
   static const Color theamPrimaryColor = Color(0xff293e69);
   static const Color theamSecondaryColor = Color(0xff6b7fa5);
+  static const Color white = Color.fromARGB(255, 255, 255, 255);
 }
