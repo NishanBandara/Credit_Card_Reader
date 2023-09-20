@@ -107,20 +107,20 @@ class _CreditCardScannerState extends State<CreditCardScanner> {
                   // color: AppColors.theamSecondaryColor,
                   scale: 1.5,
                 )),
-            Container(
-                width: MediaQuery.of(context).size.width,
-                // color: Colors.white,
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    Text(cardata?.toString() ?? 'No Card Details'),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                  ],
-                )),
+            // Container(
+            //     width: MediaQuery.of(context).size.width,
+            //     // color: Colors.white,
+            //     child: Column(
+            //       children: [
+            //         const SizedBox(
+            //           height: 20,
+            //         ),
+            //         Text(cardata?.toString() ?? 'No Card Details'),
+            //         const SizedBox(
+            //           height: 20,
+            //         ),
+            //       ],
+            //     )),
             SizedBox(
               height: getScreenHeight(context, 50),
             ),

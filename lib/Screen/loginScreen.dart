@@ -1,10 +1,15 @@
 import 'package:credit_card_reader/Screen/cardScanner.dart';
 import 'package:credit_card_reader/Screen/homeScreen.dart';
+import 'package:credit_card_reader/Screen/signupScreen.dart';
 import 'package:credit_card_reader/Screen/widgets/card_widget.dart';
+import 'package:credit_card_reader/Screen/widgets/loading_circulart.dart';
 import 'package:credit_card_reader/configure/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:credit_card_reader/utils/get_screen_size.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -140,9 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
               height: getScreenHeight(context, 15),
             ),
             InkWell(
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const CreditCardScanner()));
+              onTap: () async {
+                await signIn();
               },
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10),
@@ -168,7 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => signupScreen()));
+              },
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 8),
                 child: Container(
@@ -284,5 +291,95 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Future signIn() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    try {
+      loader(context);
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: userEmailController.text.trim(),
+          password: userPasswordController.text.trim());
+
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(
+                child: CircularProgressIndicator(),
+              ));
+
+      User? user = await FirebaseAuth.instance.currentUser;
+      log(user!.email.toString());
+      // User Name
+      localStorage.setString('userName', user!.displayName.toString());
+
+      // User email
+      localStorage.setString('userEmail', user!.email.toString());
+
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+              builder: (context) => const HomeScreen(
+                    cardNumber: '123456789',
+                    cardType: 'CardIssuer.visa',
+                    expDate: 'mm/yy',
+                    holderName: '',
+                  )),
+          (Route<dynamic> route) => false);
+    } on FirebaseAuthException catch (e) {
+      log(e.toString());
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+            child: Scaffold(
+                body: Center(
+          child: Container(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Center(
+                  child: SizedBox(
+                      // height: 250,
+                      // width: 300,
+                      child: Icon(
+                    Icons.error_outline_outlined,
+                    color: Colors.black12,
+                    size: 80,
+                  )
+
+                      //  Image.asset('images/CarLog_Logo.png'),
+                      ),
+                ),
+                Text('Oops...Sorry Please try Again!',
+                    style: TextStyle(color: Colors.black54, fontSize: 18)),
+                Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: SizedBox(
+                    width: getScreenWidth(context, 250),
+                    child: Text(e.message.toString(),
+                        style: TextStyle(color: Colors.black26, fontSize: 12)),
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                ElevatedButton(
+                    style: ButtonStyle(),
+                    child: Text(
+                      'Try Again',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(context).pop();
+                    })
+              ],
+            ),
+          ),
+        ))),
+      );
+    }
   }
 }

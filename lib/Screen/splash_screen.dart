@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
           width: getScreenWidth(context, 30),
           height: getScreenHeight(context, 30),
           child: Image.asset(
-            'assets/images/splash_card.png',
+            'assets/images/login_card.png',
             // color: AppColors.theamSecondaryColor,
             scale: 4,
           ),

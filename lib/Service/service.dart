@@ -9,6 +9,7 @@ class DatabaseHelper {
         expdate TEXT,
         cardtype TEXT,
         holdername TEXT,
+        saveType TEXT,
         createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
       """);
@@ -29,14 +30,15 @@ class DatabaseHelper {
 
   // Create new item
   static Future<int> createItem(String? cardnumber, String? expDate,
-      String? cardType, String? holderName) async {
+      String? cardType, String? holderName, String? saveType) async {
     final db = await DatabaseHelper.db();
 
     final data = {
       'cardnumber': cardnumber,
       'expdate': expDate,
       'cardType': cardType,
-      'holdername': holderName
+      'holdername': holderName,
+      'saveType': saveType
     };
     final id = await db.insert('items', data,
         conflictAlgorithm: sql.ConflictAlgorithm.replace);
@@ -58,7 +60,7 @@ class DatabaseHelper {
 
   // Update an item by id
   static Future<int> updateItem(int id, String cardnumber, String? expdate,
-      String? cardType, String? holderName) async {
+      String? cardType, String? holderName, String? saveType) async {
     final db = await DatabaseHelper.db();
 
     final data = {
@@ -66,6 +68,7 @@ class DatabaseHelper {
       'expdate': expdate,
       'cardType': cardType,
       'holdername': holderName,
+      'saveType': saveType,
       'createdAt': DateTime.now().toString()
     };
 

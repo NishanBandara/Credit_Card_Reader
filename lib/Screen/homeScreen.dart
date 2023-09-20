@@ -1,13 +1,17 @@
 import 'dart:developer';
 
+import 'package:credit_card_reader/Screen/cardScanner.dart';
+import 'package:credit_card_reader/Screen/loginScreen.dart';
 import 'package:credit_card_reader/Screen/myCardsScreen.dart';
 import 'package:credit_card_reader/Screen/widgets/leading_icon.dart';
 import 'package:credit_card_reader/Service/service.dart';
 import 'package:credit_card_reader/configure/colors.dart';
 import 'package:credit_card_reader/utils/get_screen_size.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final String cardNumber, cardType, expDate, holderName;
@@ -26,6 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isVisa = true;
   bool _isSelectScanCard = true;
 
+  final TextEditingController _CardNumberController = TextEditingController();
+  final TextEditingController _expDateController = TextEditingController();
+  final TextEditingController _cardTypeController = TextEditingController();
+  final TextEditingController _holderNameController = TextEditingController();
+
   // All data
   List<Map<String, dynamic>> myData = [];
 
@@ -40,16 +49,43 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Insert a new data to the database
-  Future<void> addItem() async {
+  Future<void> addItem({required String saveType}) async {
+    await DatabaseHelper.createItem(widget.cardNumber, widget.expDate,
+        widget.cardType, widget.holderName, saveType);
+    _refreshData();
+  }
+
+  // Insert a new data to the database
+  Future<void> addVirtualItem({
+    required String cardNumber,
+    required String expDate,
+    required String cardType,
+    required String holderName,
+    required String saveType,
+  }) async {
     await DatabaseHelper.createItem(
-        widget.cardNumber, widget.expDate, widget.cardType, widget.holderName);
+        cardNumber, expDate, cardType, holderName, saveType);
     _refreshData();
   }
 
   @override
   void initState() {
     _refreshData();
+    getUserData();
     super.initState();
+  }
+
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _openDrawer() {
+    _scaffoldKey!.currentState!.openDrawer();
+  }
+
+  var userName, userEmail;
+  void getUserData() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    userName = await localStorage.getString('userName');
+    userEmail = await localStorage.getString('userEmail');
   }
 
   @override
@@ -58,12 +94,94 @@ class _HomeScreenState extends State<HomeScreen> {
     double fem = MediaQuery.of(context).size.width / baseWidth;
     double ffem = fem * 0.97;
     return Scaffold(
+      key: _scaffoldKey,
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.bgColor,
       appBar: AppBar(
           backgroundColor: AppColors.bgColor,
           elevation: 0,
-          leading: InkWell(onTap: () {}, child: const LeadingIcon())),
+          leading: InkWell(onTap: _openDrawer, child: const LeadingIcon())),
+      drawer: Drawer(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              SizedBox(
+                height: getScreenHeight(context, 30),
+              ),
+              Column(
+                children: [
+                  Container(
+                    height: getScreenHeight(context, 100),
+                    width: getScreenWidth(context, 100),
+                    decoration: BoxDecoration(
+                      color: AppColors.theamPrimaryColor,
+                      border: Border.all(color: AppColors.theamSecondaryColor),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(100),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 60,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(userEmail.toString() == 'null'
+                        ? ''
+                        : (userEmail.toString())),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(userName.toString() == 'null'
+                        ? ''
+                        : (userName.toString())),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: getScreenHeight(context, 250),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: InkWell(
+                  onTap: () async {
+                    await FirebaseAuth.instance.signOut();
+
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => LoginScreen()));
+
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Logout User!'),
+                        backgroundColor: AppColors.theamSecondaryColor));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: Container(
+                      width: (MediaQuery.of(context).size.width) * 0.85,
+                      height: getScreenHeight(context, 65),
+                      decoration: BoxDecoration(
+                        color: AppColors.theamPrimaryColor,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Logout',
+                          style: GoogleFonts.poppins(
+                            textStyle: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+      ),
       body: Stack(
         children: [
           Column(
@@ -269,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .width) *
                                               0.85,
                                           child: TextFormField(
-                                            // controller: userEmailController,
+                                            controller: _CardNumberController,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
                                                   borderRadius:
@@ -304,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .width) *
                                               0.85,
                                           child: TextFormField(
-                                            // controller: userEmailController,
+                                            controller: _expDateController,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
                                                   borderRadius:
@@ -339,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .width) *
                                               0.85,
                                           child: TextFormField(
-                                            // controller: userEmailController,
+                                            controller: _holderNameController,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
                                                   borderRadius:
@@ -369,7 +487,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                     height: getScreenHeight(context, 10),
                                   ),
                                   InkWell(
-                                    onTap: () {},
+                                    onTap: () async {
+                                      log('Virtual Card');
+                                      await addVirtualItem(
+                                        cardNumber: _CardNumberController.text,
+                                        expDate: _expDateController.text,
+                                        holderName: _holderNameController.text,
+                                        cardType: 'CardIssuer.visa',
+                                        saveType: "Virtual Card",
+                                      ).then((value) {
+                                        Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const MyCards()));
+                                      });
+                                    },
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                           left: 10, right: 10),
@@ -422,263 +554,372 @@ class _HomeScreenState extends State<HomeScreen> {
                                   SizedBox(
                                     height: getScreenHeight(context, 5),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 5, right: 15, left: 15),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "card number:",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamPrimaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
-                                                ),
+                                  widget.expDate == 'mm/yy'
+                                      ? Container(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              SizedBox(
+                                                height: getScreenHeight(
+                                                    context, 50),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: getScreenHeight(context, 5),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                              InkWell(
+                                                  onTap: () {
+                                                    Navigator.of(context).push(
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const CreditCardScanner()));
+                                                  },
+                                                  child: Center(
+                                                    child: RichText(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      text: TextSpan(
+                                                        children: [
+                                                          TextSpan(
+                                                            text:
+                                                                'Oops ! Still not scaned card \n',
+                                                            style: GoogleFonts
+                                                                .poppins(
+                                                              textStyle: const TextStyle(
+                                                                  color: Colors
+                                                                      .black26,
+                                                                  fontSize:
+                                                                      10.0,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400),
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                              text: 'scan here',
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                textStyle: const TextStyle(
+                                                                    color: Colors
+                                                                        .black54,
+                                                                    fontSize:
+                                                                        10.0,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )),
+                                            ],
+                                          ),
+                                        )
+                                      : Column(
                                           children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "${widget.cardNumber}:",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamSecondaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
-                                                ),
-                                              ),
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                Clipboard.setData(ClipboardData(
-                                                    text:
-                                                        "${widget.cardNumber}"));
-
-                                                final snackBar = SnackBar(
-                                                  content: Text(
-                                                      'Copied to Clipboard'),
-                                                  action: SnackBarAction(
-                                                    label: 'Undo',
-                                                    onPressed: () {},
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 5, right: 15, left: 15),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "card number:",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamPrimaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                );
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(snackBar);
-                                                // });
-                                              },
-                                              child: const Icon(
-                                                Icons.copy_all_sharp,
-                                                color: Colors.black26,
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 5, right: 15, left: 15),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "expir date:",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamPrimaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
-                                                ),
+                                                  SizedBox(
+                                                    height: getScreenHeight(
+                                                        context, 5),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "${widget.cardNumber}:",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamSecondaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          Clipboard.setData(
+                                                              ClipboardData(
+                                                                  text:
+                                                                      "${widget.cardNumber}"));
+
+                                                          final snackBar =
+                                                              SnackBar(
+                                                            content: Text(
+                                                                'Copied to Clipboard'),
+                                                            action:
+                                                                SnackBarAction(
+                                                              label: 'Undo',
+                                                              onPressed: () {},
+                                                            ),
+                                                          );
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                                  snackBar);
+                                                          // });
+                                                        },
+                                                        child: const Icon(
+                                                          Icons.copy_all_sharp,
+                                                          color: Colors.black26,
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: getScreenHeight(context, 5),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "${widget.expDate}",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamSecondaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
-                                                ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 5, right: 15, left: 15),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "expir date:",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamPrimaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    height: getScreenHeight(
+                                                        context, 5),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "${widget.expDate}",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamSecondaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () async {
+                                                          Clipboard.setData(
+                                                              ClipboardData(
+                                                                  text:
+                                                                      "${widget.expDate}"));
+
+                                                          final snackBar =
+                                                              SnackBar(
+                                                            content: Text(
+                                                                'Copied to Clipboard'),
+                                                            action:
+                                                                SnackBarAction(
+                                                              label: 'Undo',
+                                                              onPressed: () {},
+                                                            ),
+                                                          );
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                                  snackBar);
+                                                          // });
+                                                        },
+                                                        child: const Icon(
+                                                          Icons.copy_all_sharp,
+                                                          color: Colors.black26,
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 5, right: 15, left: 15),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "Aplication type:",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamPrimaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    height: getScreenHeight(
+                                                        context, 5),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: getScreenWidth(
+                                                            context, 200),
+                                                        child: Text(
+                                                          "${widget.cardType == 'CardIssuer.visa' ? 'Visa' : 'Master'}",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                            textStyle: const TextStyle(
+                                                                color: AppColors
+                                                                    .theamSecondaryColor,
+                                                                fontSize: 12.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height:
+                                                  getScreenHeight(context, 30),
                                             ),
                                             InkWell(
                                               onTap: () async {
-                                                Clipboard.setData(ClipboardData(
-                                                    text: "${widget.expDate}"));
-
-                                                final snackBar = SnackBar(
-                                                  content: Text(
-                                                      'Copied to Clipboard'),
-                                                  action: SnackBarAction(
-                                                    label: 'Undo',
-                                                    onPressed: () {},
-                                                  ),
-                                                );
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(snackBar);
-                                                // });
+                                                log('Scan Card');
+                                                // Save new data
+                                                await addItem(
+                                                        saveType: "Scan Card")
+                                                    .then((value) {
+                                                  Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const MyCards()));
+                                                });
                                               },
-                                              child: const Icon(
-                                                Icons.copy_all_sharp,
-                                                color: Colors.black26,
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 5, right: 15, left: 15),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "Aplication type:",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamPrimaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 10, right: 10),
+                                                child: Container(
+                                                  width: (MediaQuery.of(context)
+                                                          .size
+                                                          .width) *
+                                                      0.85,
+                                                  height: getScreenHeight(
+                                                      context, 65),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors
+                                                        .theamSecondaryColor,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Save Card',
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        textStyle:
+                                                            const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 14.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(
-                                          height: getScreenHeight(context, 5),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width:
-                                                  getScreenWidth(context, 200),
-                                              child: Text(
-                                                "${widget.cardType == 'CardIssuer.visa' ? 'Visa' : 'Master'}",
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: const TextStyle(
-                                                      color: AppColors
-                                                          .theamSecondaryColor,
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.w400),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: getScreenHeight(context, 30),
-                                  ),
-                                  InkWell(
-                                    onTap: () async {
-                                      // Save new data
-                                      await addItem().then((value) {
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const MyCards()));
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 10, right: 10),
-                                      child: Container(
-                                        width: (MediaQuery.of(context)
-                                                .size
-                                                .width) *
-                                            0.85,
-                                        height: getScreenHeight(context, 65),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.theamSecondaryColor,
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'Save Card',
-                                            style: GoogleFonts.poppins(
-                                              textStyle: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14.0,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               )),
                   ),
@@ -777,28 +1018,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Column(
-                          children: [
-                            const ImageIcon(
-                              AssetImage("assets/images/card_list.png"),
-                              color: Colors.white,
-                              size: 25,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(2.0),
-                              child: Text(
-                                'Add new',
-                                style: GoogleFonts.poppins(
-                                  textStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9.0,
-                                      fontWeight: FontWeight.w200),
-                                ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const CreditCardScanner()));
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(30.0),
+                          child: Column(
+                            children: [
+                              const ImageIcon(
+                                AssetImage("assets/images/card_list.png"),
+                                color: Colors.white,
+                                size: 25,
                               ),
-                            )
-                          ],
+                              Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: Text(
+                                  'Add new',
+                                  style: GoogleFonts.poppins(
+                                    textStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9.0,
+                                        fontWeight: FontWeight.w200),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       )
                     ],
@@ -810,5 +1057,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+}
+
+class FireAuth {
+  static Future<User?> registerUsingEmailPassword({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    FirebaseAuth auth = FirebaseAuth.instance;
+    User? user;
+    try {
+      UserCredential userCredential = await auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      user = userCredential.user;
+      await user!.updateProfile(displayName: name);
+      await user.reload();
+      user = auth.currentUser;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+    } catch (e) {
+      print(e);
+    }
+    return user;
   }
 }

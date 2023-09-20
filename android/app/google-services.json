@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "117134801380",
+    "project_id": "credit-card-nfc-readers",
+    "storage_bucket": "credit-card-nfc-readers.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117134801380:android:813738bf3f4b8bbfda2ff1",
+        "android_client_info": {
+          "package_name": "com.example.credit_card_reader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsZz7B2pEQUeYvKHYkwCgnfLtqxCVoWso"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

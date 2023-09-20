@@ -1,8 +1,12 @@
+import 'dart:developer';
+
+import 'package:credit_card_reader/Screen/cardScanner.dart';
 import 'package:credit_card_reader/Screen/widgets/leading_icon.dart';
 import 'package:credit_card_reader/Service/service.dart';
 import 'package:credit_card_reader/configure/colors.dart';
 import 'package:credit_card_reader/utils/get_screen_size.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MyCards extends StatefulWidget {
@@ -127,7 +131,8 @@ class _MyCardsState extends State<MyCards> {
         _CardNumberController.text,
         _expDateController.text,
         _cardTypeController.text,
-        _holderNameController.text);
+        _holderNameController.text,
+        'Virtual Card');
     _refreshData();
   }
 
@@ -138,7 +143,8 @@ class _MyCardsState extends State<MyCards> {
         _CardNumberController.text,
         _expDateController.text,
         _cardTypeController.text,
-        _holderNameController.text);
+        _holderNameController.text,
+        'Virtual Card');
     _refreshData();
   }
 
@@ -169,7 +175,7 @@ class _MyCardsState extends State<MyCards> {
               style: GoogleFonts.poppins(
                 textStyle: const TextStyle(
                     color: AppColors.theamSecondaryColor,
-                    fontSize: 22.0,
+                    fontSize: 20.0,
                     fontWeight: FontWeight.w600),
               ),
             ),
@@ -179,28 +185,76 @@ class _MyCardsState extends State<MyCards> {
                   child: CircularProgressIndicator(),
                 )
               : myData.isEmpty
-                  ? const Center(child: Text("No Data Available!!!"))
+                  ? Center(
+                      child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            // width: getScreenWidth(context, 30),
+                            // height: getScreenHeight(context, 30),
+                            child: Image.asset(
+                              'assets/images/empty.jpg',
+                              // color: AppColors.theamSecondaryColor,
+                              scale: 3,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          "Oops!  \nNo data found",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            textStyle: const TextStyle(
+                                color: AppColors.theamSecondaryColor,
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                      ],
+                    ))
                   : SizedBox(
                       height: getScreenHeight(context, 750),
                       child: ListView.builder(
                         itemCount: myData.length,
                         itemBuilder: (context, index) => Card(
-                          color: index % 2 == 0
-                              ? AppColors.white
-                              : Color.fromARGB(255, 237, 234, 234),
-                          margin: const EdgeInsets.all(15),
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(20))),
+                          color: AppColors.white,
+
+                          margin: const EdgeInsets.all(10),
                           child: Column(
                             children: [
-                              SizedBox(
-                                width: getScreenWidth(context, 200),
-                                child: Text(
-                                  "All cards will be saved in you local device",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    textStyle: const TextStyle(
-                                        color: AppColors.theamSecondaryColor,
-                                        fontSize: 12.0,
-                                        fontWeight: FontWeight.w400),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: IconButton(
+                                        onPressed: () {
+                                          deleteItem(myData[index]['id']);
+                                        },
+                                        icon: const Icon(
+                                          Icons.clear,
+                                          color: Colors.black38,
+                                        )),
+                                  )
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: SizedBox(
+                                  width: getScreenWidth(context, 200),
+                                  child: Text(
+                                    "${myData[index]['saveType'].toString()}",
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      textStyle: const TextStyle(
+                                          color: AppColors.theamSecondaryColor,
+                                          fontSize: 12.0,
+                                          fontWeight: FontWeight.w400),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -269,6 +323,230 @@ class _MyCardsState extends State<MyCards> {
                                   ),
                                 ],
                               ),
+                              Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 5, right: 15, left: 15),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "card number:",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamPrimaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: getScreenHeight(context, 5),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "${myData[index]['cardnumber']}:",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamSecondaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${myData[index]['cardnumber']}"));
+
+                                                final snackBar = SnackBar(
+                                                  content: Text(
+                                                      'Copied to Clipboard'),
+                                                  action: SnackBarAction(
+                                                    label: 'Undo',
+                                                    onPressed: () {},
+                                                  ),
+                                                );
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(snackBar);
+                                                // });
+                                              },
+                                              child: const Icon(
+                                                Icons.copy_all_sharp,
+                                                color: Colors.black26,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 5, right: 15, left: 15),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "expir date:",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamPrimaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: getScreenHeight(context, 5),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "${myData[index]['expdate']}",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamSecondaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: () async {
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${myData[index]['expdate']}"));
+
+                                                final snackBar = SnackBar(
+                                                  content: Text(
+                                                      'Copied to Clipboard'),
+                                                  action: SnackBarAction(
+                                                    label: 'Undo',
+                                                    onPressed: () {},
+                                                  ),
+                                                );
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(snackBar);
+                                                // });
+                                              },
+                                              child: const Icon(
+                                                Icons.copy_all_sharp,
+                                                color: Colors.black26,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 5, right: 15, left: 15),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "Aplication type:",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamPrimaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: getScreenHeight(context, 5),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width:
+                                                  getScreenWidth(context, 200),
+                                              child: Text(
+                                                "${myData[index]['cardtype'] == 'CardIssuer.visa' ? 'Visa' : 'Master'}",
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: const TextStyle(
+                                                      color: AppColors
+                                                          .theamSecondaryColor,
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w400),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: getScreenHeight(context, 30),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
 
@@ -303,10 +581,10 @@ class _MyCardsState extends State<MyCards> {
                     ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () => showMyForm(null),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //     child: const Icon(Icons.add),
+      //     onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+      //         builder: (context) => const CreditCardScanner()))),
     );
   }
 }
